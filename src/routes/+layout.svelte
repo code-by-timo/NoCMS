@@ -1,12 +1,21 @@
 <script>
 	import '../app.css';
-	import favicon from '$lib/assets/favicon.svg';
+	import logo from '$lib/assets/logo.svg';
+	import Navbar from '$lib/components/navbar.svelte';
 
-	let { children } = $props();
+	const { children } = $props();
 </script>
 
 <svelte:head>
-	<link rel="icon" href={favicon} />
+	<link rel="icon" href={logo} />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
 </svelte:head>
 
-{@render children?.()}
+<Navbar />
+<main>
+	{@render children?.()}
+</main>
+
+<!--
+<Footer />
+-->
