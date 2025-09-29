@@ -1,0 +1,102 @@
+<script>
+	import { Button } from '$lib/components/ui/button';
+	import { Badge } from '$lib/components/ui/badge';
+</script>
+
+<section class="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 overflow-hidden">
+	<!-- Background Decorations -->
+	<div class="absolute inset-0 overflow-hidden">
+		<div class="absolute top-1/4 right-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl animate-pulse"></div>
+		<div class="absolute bottom-1/4 left-1/4 w-80 h-80 bg-secondary/5 rounded-full blur-3xl animate-pulse" style="animation-delay: 1s;"></div>
+		<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-accent/3 rounded-full blur-3xl animate-pulse" style="animation-delay: 2s;"></div>
+	</div>
+
+	<!-- Grid Pattern -->
+	<div class="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1)_1px,transparent_1px)] bg-[size:50px_50px] opacity-20"></div>
+
+	<div class="relative z-10 container mx-auto px-4 text-center">
+		<div class="max-w-4xl mx-auto space-y-8">
+			<!-- Badge -->
+			<div class="animate-fade-in" style="animation-delay: 0.2s;">
+				<Badge variant="secondary" class="text-sm px-4 py-2">
+					🚀 Neue Website? Perfekt!
+				</Badge>
+			</div>
+
+			<!-- Main Heading -->
+			<div class="animate-fade-in" style="animation-delay: 0.4s;">
+				<h1 class="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-foreground">
+					Digitale Lösungen, die
+					<span class="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+						begeistern
+					</span>
+				</h1>
+			</div>
+
+			<!-- Description -->
+			<div class="animate-fade-in" style="animation-delay: 0.6s;">
+				<p class="text-xl lg:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+					Wir entwickeln maßgeschneiderte Web- und Mobile-Anwendungen, die Ihr Unternehmen
+					voranbringen und Ihre Kunden begeistern.
+				</p>
+			</div>
+
+			<!-- CTA Buttons -->
+			<div class="animate-fade-in flex flex-col sm:flex-row gap-4 justify-center items-center pt-4" style="animation-delay: 0.8s;">
+				<Button size="lg" class="text-lg px-8 py-6 h-auto shadow-lg hover:shadow-xl transition-all duration-300">
+					Projekt starten
+				</Button>
+				<Button variant="outline" size="lg" class="text-lg px-8 py-6 h-auto border-2 hover:bg-muted/50 transition-all duration-300">
+					Portfolio ansehen
+				</Button>
+			</div>
+
+			<!-- Stats -->
+			<div class="animate-fade-in pt-16" style="animation-delay: 1s;">
+				<div class="flex flex-wrap justify-center gap-8 text-center">
+					<div class="space-y-1">
+						<div class="text-3xl font-bold text-foreground">150+</div>
+						<div class="text-sm text-muted-foreground">Projekte</div>
+					</div>
+					<div class="space-y-1">
+						<div class="text-3xl font-bold text-foreground">50+</div>
+						<div class="text-sm text-muted-foreground">Kunden</div>
+					</div>
+					<div class="space-y-1">
+						<div class="text-3xl font-bold text-foreground">5★</div>
+						<div class="text-sm text-muted-foreground">Bewertung</div>
+					</div>
+					<div class="space-y-1">
+						<div class="text-3xl font-bold text-foreground">24/7</div>
+						<div class="text-sm text-muted-foreground">Support</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Scroll Indicator -->
+	<div class="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
+		<div class="w-6 h-10 border-2 border-muted-foreground rounded-full flex justify-center">
+			<div class="w-1 h-3 bg-muted-foreground rounded-full mt-2"></div>
+		</div>
+	</div>
+</section>
+
+<style>
+	@keyframes fade-in {
+		from {
+			opacity: 0;
+			transform: translateY(20px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	.animate-fade-in {
+		animation: fade-in 0.6s ease-out forwards;
+		opacity: 0;
+	}
+</style>

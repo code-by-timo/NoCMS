@@ -1,7 +1,7 @@
 <script>
 	import '../app.css';
 	import logo from '$lib/assets/logo.svg';
-	import Navbar from '$lib/components/navbar.svelte';
+	import Navbar from '$lib/components//blocks/navbar/navbar1.svelte';
 
 	const { children } = $props();
 </script>
@@ -16,6 +16,3 @@
 	{@render children?.()}
 </main>
 
-<!--
-<Footer />
--->
