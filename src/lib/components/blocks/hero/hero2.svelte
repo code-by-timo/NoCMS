@@ -6,7 +6,7 @@
 
 <section class="relative min-h-screen overflow-hidden">
 	<!-- Background Image with Overlay -->
-	<div class="absolute inset-0 bg-[url('/api/placeholder/1920/1080')] bg-cover bg-center"></div>
+	<div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1920&h=1080&fit=crop')] bg-cover bg-center"></div>
 	<div class="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/30"></div>
 	<div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
 

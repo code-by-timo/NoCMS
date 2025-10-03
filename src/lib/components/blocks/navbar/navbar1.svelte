@@ -3,7 +3,6 @@
 	import {
 		Sheet,
 		SheetContent,
-		SheetDescription,
 		SheetHeader,
 		SheetTitle,
 		SheetTrigger
@@ -25,7 +24,7 @@
 	const navItems = [
 		{ title: 'Home', href: '/' },
 		{ title: 'Über mich', href: '/ueber-mich' },
-		{ title: 'Kontakt', href: '/contact' }
+		{ title: 'Kontakt', href: '/kontakt' }
 	];
 </script>
 
@@ -51,7 +50,7 @@
 
 			<!-- Desktop CTA -->
 			<div class="hidden lg:flex">
-				<Button href="/contact" class="shadow-lg hover:shadow-xl transition-all duration-300">
+				<Button href="/kontakt" class="shadow-lg hover:shadow-xl transition-all duration-300">
 					Kontakt
 				</Button>
 			</div>

@@ -10,12 +10,12 @@
 			<!-- Content Side -->
 			<div class="space-y-8">
 				<div class="space-y-4">
-					<Badge variant="secondary" class="w-fit">Über uns</Badge>
+					<Badge variant="secondary" class="w-fit">ï¿½ber uns</Badge>
 					<h2 class="text-4xl font-bold tracking-tight text-foreground">
 						Wir gestalten die digitale Zukunft
 					</h2>
 					<p class="text-xl text-muted-foreground leading-relaxed">
-						Mit über 10 Jahren Erfahrung entwickeln wir maßgeschneiderte Lösungen, die Ihr
+						Mit ï¿½ber 10 Jahren Erfahrung entwickeln wir maï¿½geschneiderte Lï¿½sungen, die Ihr
 						Unternehmen voranbringen und nachhaltigen Erfolg schaffen.
 					</p>
 				</div>
@@ -55,8 +55,8 @@
 			<div class="relative">
 				<div class="relative overflow-hidden rounded-2xl shadow-2xl">
 					<div class="aspect-[4/3] bg-gradient-to-br from-primary/20 to-primary/5">
-						<div class="absolute inset-0 bg-[url('/api/placeholder/600/450')] bg-cover bg-center" />
-						<div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+						<div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&h=450&fit=crop')] bg-cover bg-center"></div>
+						<div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
 					</div>
 				</div>
 				<!-- Decorative Elements -->
