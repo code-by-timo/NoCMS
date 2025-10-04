@@ -23,6 +23,13 @@
 	let dragStart = $state({ x: 0, y: 0 });
 	let canvasElement = $state(null);
 
+	// Viewport configurations
+	const viewports = [
+		{ label: 'Desktop', width: 1200 },
+		{ label: 'Tablet', width: 768 },
+		{ label: 'Mobile', width: 375 }
+	];
+
 	// Page configuration
 	const pages = [
 		{ path: '/', label: 'Home', component: HomePage },
@@ -219,12 +226,23 @@
 					class="absolute inset-0 flex items-center justify-center"
 					style="transform: translate({pan.x}px, {pan.y}px);"
 				>
-					<!-- Page Container -->
 					<div
-						class="bg-background shadow-2xl"
-						style="transform: scale({zoom}); transform-origin: center; transition: transform 0.1s ease-out; max-width: 1200px; width: 100%;"
+						class="flex gap-8 p-8"
+						style="transform: scale({zoom}); transform-origin: center; transition: transform 0.1s ease-out;"
 					>
-						<CurrentPageComponent />
+						{#each viewports as viewport}
+							<div class="flex flex-col gap-2">
+								<div class="text-center text-sm font-medium text-muted-foreground">
+									{viewport.label} ({viewport.width}px)
+								</div>
+								<div
+									class="bg-background shadow-2xl"
+									style="width: {viewport.width}px;"
+								>
+									<CurrentPageComponent />
+								</div>
+							</div>
+						{/each}
 					</div>
 				</div>
 			</main>
