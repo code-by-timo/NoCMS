@@ -1,8 +1,1 @@
-<script>
-	import { onMount } from 'svelte';
-	import { goto } from '$app/navigation';
-
-	onMount(() => {
-		goto('/admin/preview/');
-	});
-</script>
+<!-- This page is intentionally empty. All content is handled by +layout.svelte -->
