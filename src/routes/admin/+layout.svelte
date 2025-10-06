@@ -1,5 +1,6 @@
 <script>
-	import { onMount } from 'svelte';
+	import RootWrapper from '$lib/components/RootWrapper.svelte';
+	import { onMount, tick } from 'svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
@@ -21,7 +22,31 @@
 	let pan = $state({ x: 0, y: 0 });
 	let isDragging = $state(false);
 	let dragStart = $state({ x: 0, y: 0 });
-	let canvasElement = $state(null);
+	/** @type {HTMLElement|null} */
+	let canvasElement = $state(/** @type {HTMLElement|null} */ (null));
+	/** @type {HTMLDivElement|null} */
+	let devicesWrapper = $state(/** @type {HTMLDivElement|null} */ (null));
+
+	const MIN_ZOOM = 0.2;
+	const MAX_ZOOM = 2.1;
+	const FIT_MARGIN = 0.9;
+	const ZOOM_SENSITIVITY = 0.005;
+	const LINE_DELTA_MULTIPLIER = 40;
+	const PAN_MULTIPLIER = 1.5;
+	const WHEEL_GUARD_THRESHOLD = 12;
+	const LABEL_BUFFER = 72;
+
+	const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+
+	/** @param {MouseEvent | WheelEvent} event */
+	function pointerRelativeToCanvas(event) {
+		if (!canvasElement) return { x: 0, y: 0 };
+		const rect = canvasElement.getBoundingClientRect();
+		return {
+			x: event.clientX - rect.left,
+			y: event.clientY - rect.top
+		};
+	}
 
 	// Viewport configurations
 	const viewports = [
@@ -88,11 +113,16 @@
 	}
 
 	// Canvas Pan functionality
+	/** @param {MouseEvent} e */
 	function handleMouseDown(e) {
+		if (!canvasElement) return;
+		e.preventDefault();
+		canvasElement.focus();
 		isDragging = true;
 		dragStart = { x: e.clientX - pan.x, y: e.clientY - pan.y };
 	}
 
+	/** @param {MouseEvent} e */
 	function handleMouseMove(e) {
 		if (!isDragging) return;
 		pan = {
@@ -106,27 +136,118 @@
 	}
 
 	// Canvas Scroll functionality
-	function handleWheel(e) {
-		// Zoom with Ctrl/Cmd + Scroll
-		if (e.ctrlKey || e.metaKey) {
-			e.preventDefault();
-			const delta = e.deltaY > 0 ? 0.9 : 1.1;
-			const newZoom = Math.min(Math.max(zoom * delta, 0.5), 2);
-			zoom = newZoom;
-		} else {
-			// Normal scroll behavior
+	/** @param {WheelEvent} event */
+	function handleWheel(event) {
+		event.preventDefault();
+		if (!canvasElement) return;
+
+		const position = pointerRelativeToCanvas(event);
+		const isZoomGesture = event.ctrlKey || event.metaKey;
+		const multiplier = event.deltaMode === WheelEvent.DOM_DELTA_LINE ? LINE_DELTA_MULTIPLIER : 1;
+		const deltaX = event.deltaX * multiplier;
+		const deltaY = event.deltaY * multiplier;
+
+		if (isZoomGesture) {
+			const zoomFactor = Math.pow(2, -deltaY * ZOOM_SENSITIVITY);
+			const nextZoom = clamp(zoom * zoomFactor, MIN_ZOOM, MAX_ZOOM);
+			const contentX = (position.x - pan.x) / zoom;
+			const contentY = (position.y - pan.y) / zoom;
+
 			pan = {
-				x: pan.x,
-				y: pan.y - e.deltaY
+				x: position.x - contentX * nextZoom,
+				y: position.y - contentY * nextZoom
+			};
+
+			zoom = nextZoom;
+		} else {
+			if (Math.abs(deltaX) > WHEEL_GUARD_THRESHOLD || Math.abs(deltaY) > WHEEL_GUARD_THRESHOLD) {
+				event.preventDefault();
+			}
+			pan = {
+				x: pan.x - deltaX * PAN_MULTIPLIER,
+				y: pan.y - deltaY * PAN_MULTIPLIER
 			};
 		}
 	}
 
-	// Reset canvas to center
-	function resetCanvas() {
-		zoom = 1;
-		pan = { x: 0, y: 0 };
+	/** @param {number} width */
+	function deviceHeightForWidth(width) {
+		if (width <= 480) return 812; // small/mobile
+		if (width <= 1024) return 1024; // tablet
+		return 900; // desktop
 	}
+
+	function fitDesktopToCanvas() {
+		if (typeof window === 'undefined') return;
+		if (!canvasElement || !devicesWrapper) return;
+
+		const canvasRect = canvasElement.getBoundingClientRect();
+		if (canvasRect.width === 0 || canvasRect.height === 0) return;
+
+		const styles = window.getComputedStyle(devicesWrapper);
+		const paddingLeft = parseFloat(styles.paddingLeft) || 0;
+		const paddingRight = parseFloat(styles.paddingRight) || 0;
+		const paddingTop = parseFloat(styles.paddingTop) || 0;
+		const paddingBottom = parseFloat(styles.paddingBottom) || 0;
+
+		const desktopViewport = viewports[0];
+		const desktopWidth = desktopViewport.width;
+		const desktopHeight = deviceHeightForWidth(desktopWidth);
+
+		const baseWidth = desktopWidth + paddingLeft + paddingRight;
+		const baseHeight = desktopHeight + paddingTop + paddingBottom + LABEL_BUFFER;
+
+		const targetZoom = clamp(
+			Math.min(
+				canvasRect.width / baseWidth,
+				canvasRect.height / baseHeight
+			) * FIT_MARGIN,
+			MIN_ZOOM,
+			MAX_ZOOM
+		);
+
+		const desktopCenterX = paddingLeft + desktopWidth / 2;
+		const desktopCenterY = paddingTop + LABEL_BUFFER + desktopHeight / 2;
+
+		const nextPan = {
+			x: canvasRect.width / 2 - desktopCenterX * targetZoom,
+			y: canvasRect.height / 2 - desktopCenterY * targetZoom
+		};
+
+		zoom = targetZoom;
+		pan = nextPan;
+	}
+
+	$effect(() => {
+		if (typeof window === 'undefined') return;
+		const element = canvasElement;
+		const content = devicesWrapper;
+		if (!element || !content) return;
+
+		const resize = () => fitDesktopToCanvas();
+		resize();
+
+		const observer = new ResizeObserver(resize);
+		observer.observe(element);
+		observer.observe(content);
+		window.addEventListener('resize', resize);
+
+		return () => {
+			observer.disconnect();
+			window.removeEventListener('resize', resize);
+		};
+	});
+
+	$effect(async () => {
+		selectedPath;
+		await tick();
+		fitDesktopToCanvas();
+	});
+
+
+	// Simpler approach: don't run DOM-parsing JS. Instead use CSS-based preview rules
+	// that scope common viewport-driven utilities inside `.admin-device`. This avoids
+	// modifying components and keeps the admin preview lightweight.
 </script>
 
 {#if !isAuthenticated}
@@ -198,54 +319,51 @@
 			</aside>
 
 			<!-- Canvas Container -->
-			<main
+			<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+			<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+			<div
 				bind:this={canvasElement}
-				class="relative flex-1 overflow-hidden bg-muted"
+				role="region"
+				aria-label="Device canvas"
+				tabindex="0"
+				class="relative flex-1 overflow-hidden overscroll-contain bg-muted"
 				onmousedown={handleMouseDown}
 				onmousemove={handleMouseMove}
 				onmouseup={handleMouseUp}
 				onmouseleave={handleMouseUp}
 				onwheel={handleWheel}
-				style="cursor: {isDragging ? 'grabbing' : 'grab'};"
+				style="cursor: {isDragging ? 'grabbing' : 'grab'}; touch-action: none;"
 			>
-				<!-- Zoom Controls -->
+				<!-- Zoom Indicator -->
 				<div class="absolute bottom-4 left-4 z-10 flex items-center gap-2 rounded-md bg-card/90 px-3 py-2 text-sm shadow-lg backdrop-blur-sm">
 					<span class="text-muted-foreground">{Math.round(zoom * 100)}%</span>
-					<div class="h-4 w-px bg-border"></div>
-					<button
-						onclick={resetCanvas}
-						class="rounded px-2 py-1 text-xs transition-colors hover:bg-accent"
-						title="Reset view"
-					>
-						Reset
-					</button>
 				</div>
 
 				<!-- Canvas Content -->
 				<div
-					class="absolute inset-0 flex items-center justify-center"
+					class="absolute inset-0"
 					style="transform: translate({pan.x}px, {pan.y}px);"
 				>
 					<div
-						class="flex gap-8 p-8"
-						style="transform: scale({zoom}); transform-origin: center; transition: transform 0.1s ease-out;"
+					bind:this={devicesWrapper}
+					class="flex items-start gap-32 p-24"
+					style="transform: scale({zoom}); transform-origin: 0 0; transition: transform 0.08s cubic-bezier(0.16, 1, 0.3, 1);"
 					>
 						{#each viewports as viewport}
-							<div class="flex flex-col gap-2">
+							<div class="flex flex-col gap-5">
 								<div class="text-center text-sm font-medium text-muted-foreground">
 									{viewport.label} ({viewport.width}px)
 								</div>
-								<div
-									class="bg-background shadow-2xl"
-									style="width: {viewport.width}px;"
-								>
-									<CurrentPageComponent />
+								<div class="admin-device" style="width: {viewport.width}px; --preview-100vh: {deviceHeightForWidth(viewport.width)}px; overflow:visible; transform: translateZ(0); position:relative;">
+									<RootWrapper preview={true}>
+										<CurrentPageComponent />
+									</RootWrapper>
 								</div>
 							</div>
 						{/each}
 					</div>
 				</div>
-			</main>
+			</div>
 
 			<!-- Right Sidebar -->
 			<aside class="w-64 border-l bg-card">
@@ -258,3 +376,5 @@
 		</div>
 	</div>
 {/if}
+
+<!-- admin preview CSS moved to global stylesheet -->

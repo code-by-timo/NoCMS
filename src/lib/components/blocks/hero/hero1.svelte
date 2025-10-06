@@ -3,7 +3,8 @@
 	import { Badge } from '$lib/components/ui/badge';
 </script>
 
-<section class="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 overflow-hidden">
+<section class="relative flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 overflow-hidden"
+    style="container-type: inline-size; min-height: var(--preview-100vh, 100svh);">
 	<!-- Background Decorations -->
 	<div class="absolute inset-0 overflow-hidden">
 		<div class="absolute top-1/4 right-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl animate-pulse"></div>
@@ -84,6 +85,41 @@
 </section>
 
 <style>
+	/* Container queries so the hero respects the width of its container (useful for admin previews) */
+	:global(section) {
+		container-type: inline-size;
+	}
+
+	/* Small / mobile container */
+	@container (max-width: 639px) {
+		h1 {
+			font-size: 2rem; /* mobile size */
+		}
+		p {
+			font-size: 1rem;
+		}
+	}
+
+	/* Medium / tablet container */
+	@container (min-width: 640px) and (max-width: 1023px) {
+		h1 {
+			font-size: 3.75rem; /* Tailwind 6xl equivalent */
+		}
+		p {
+			font-size: 1.125rem;
+		}
+	}
+
+	/* Large / desktop container */
+	@container (min-width: 1024px) {
+		h1 {
+			font-size: 4.5rem; /* Tailwind 7xl equivalent */
+		}
+		p {
+			font-size: 1.25rem;
+		}
+	}
+
 	@keyframes fade-in {
 		from {
 			opacity: 0;

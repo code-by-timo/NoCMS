@@ -119,3 +119,38 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Admin preview overrides (emulate device viewport inside admin device boxes) */
+.admin-device {
+  container-type: inline-size;
+}
+
+.admin-device .min-h-screen {
+  min-height: var(--preview-100vh, 100svh) !important;
+}
+
+@container (max-width: 639px) {
+  .admin-device h1 {
+    font-size: 2rem !important;
+    line-height: 1.05 !important;
+  }
+  .admin-device p {
+    font-size: 1rem !important;
+  }
+}
+@container (min-width: 640px) and (max-width: 1023px) {
+  .admin-device h1 {
+    font-size: 3.75rem !important; /* approx Tailwind 6xl */
+  }
+  .admin-device p {
+    font-size: 1.125rem !important;
+  }
+}
+@container (min-width: 1024px) {
+  .admin-device h1 {
+    font-size: 4.5rem !important; /* approx Tailwind 7xl */
+  }
+  .admin-device p {
+    font-size: 1.25rem !important;
+  }
+}
