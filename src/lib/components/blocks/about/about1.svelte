@@ -1,7 +1,15 @@
 <script>
-	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card';
+	import { Card, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
+
+	let {
+		badge = 'Über uns',
+		title = 'Wir gestalten die digitale Zukunft',
+		description = 'Mit über 10 Jahren Erfahrung entwickeln wir maßgeschneiderte Lösungen, die Ihr Unternehmen voranbringen und nachhaltigen Erfolg schaffen.',
+		buttonText = 'Mehr erfahren',
+		buttonLink = '#'
+	} = $props();
 </script>
 
 <section class="py-24 bg-background">
@@ -10,13 +18,12 @@
 			<!-- Content Side -->
 			<div class="space-y-8">
 				<div class="space-y-4">
-					<Badge variant="secondary" class="w-fit">�ber uns</Badge>
+					<Badge variant="secondary" class="w-fit">{badge}</Badge>
 					<h2 class="text-4xl font-bold tracking-tight text-foreground">
-						Wir gestalten die digitale Zukunft
+						{title}
 					</h2>
 					<p class="text-xl text-muted-foreground leading-relaxed">
-						Mit �ber 10 Jahren Erfahrung entwickeln wir ma�geschneiderte L�sungen, die Ihr
-						Unternehmen voranbringen und nachhaltigen Erfolg schaffen.
+						{description}
 					</p>
 				</div>
 
@@ -46,8 +53,8 @@
 					</div>
 				</div>
 
-				<Button size="lg" class="w-fit">
-					Mehr erfahren
+				<Button href={buttonLink} size="lg" class="w-fit">
+					{buttonText}
 				</Button>
 			</div>
 
@@ -60,8 +67,8 @@
 					</div>
 				</div>
 				<!-- Decorative Elements -->
-				<div class="absolute -top-6 -right-6 w-24 h-24 bg-primary/10 rounded-full blur-xl" />
-				<div class="absolute -bottom-8 -left-8 w-32 h-32 bg-secondary/20 rounded-full blur-xl" />
+				<div class="absolute -top-6 -right-6 w-24 h-24 bg-primary/10 rounded-full blur-xl"></div>
+				<div class="absolute -bottom-8 -left-8 w-32 h-32 bg-secondary/20 rounded-full blur-xl"></div>
 			</div>
 		</div>
 	</div>

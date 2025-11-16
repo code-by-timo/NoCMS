@@ -7,6 +7,12 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import { Separator } from '$lib/components/ui/separator';
 
+	let {
+		badge = 'Kontakt',
+		title = 'Lassen Sie uns Ã¼ber Ihr Projekt sprechen',
+		description = 'Haben Sie eine Idee oder ein Projekt im Kopf? Wir freuen uns darauf, von Ihnen zu hÃ¶ren und gemeinsam die perfekte LÃ¶sung zu entwickeln.'
+	} = $props();
+
 	let formData = $state({
 		name: '',
 		email: '',
@@ -19,10 +25,10 @@
 	async function handleSubmit(event) {
 		event.preventDefault();
 		isSubmitting = true;
-		
+
 		// Simulate form submission
 		await new Promise(resolve => setTimeout(resolve, 1000));
-		
+
 		// Reset form
 		formData = { name: '', email: '', company: '', message: '' };
 		isSubmitting = false;
@@ -35,13 +41,12 @@
 			<!-- Contact Info -->
 			<div class="space-y-8">
 				<div class="space-y-4">
-					<Badge variant="secondary" class="w-fit">Kontakt</Badge>
+					<Badge variant="secondary" class="w-fit">{badge}</Badge>
 					<h2 class="text-4xl font-bold tracking-tight text-foreground">
-						Lassen Sie uns über Ihr Projekt sprechen
+						{title}
 					</h2>
 					<p class="text-lg text-muted-foreground leading-relaxed">
-						Haben Sie eine Idee oder ein Projekt im Kopf? Wir freuen uns darauf, von Ihnen zu hören
-						und gemeinsam die perfekte Lösung zu entwickeln.
+						{description}
 					</p>
 				</div>
 
@@ -82,8 +87,8 @@
 				<div class="p-6 bg-muted/50 rounded-xl">
 					<h4 class="font-semibold text-foreground mb-3">Kostenlose Erstberatung</h4>
 					<p class="text-sm text-muted-foreground">
-						Wir bieten Ihnen eine unverbindliche 30-minütige Beratung, um Ihr Projekt zu besprechen
-						und erste Lösungsansätze zu entwickeln.
+						Wir bieten Ihnen eine unverbindliche 30-minï¿½tige Beratung, um Ihr Projekt zu besprechen
+						und erste Lï¿½sungsansï¿½tze zu entwickeln.
 					</p>
 				</div>
 			</div>
@@ -93,7 +98,7 @@
 				<CardHeader>
 					<CardTitle class="text-2xl">Nachricht senden</CardTitle>
 					<CardDescription>
-						Füllen Sie das Formular aus und wir melden uns schnellstmöglich bei Ihnen.
+						Fï¿½llen Sie das Formular aus und wir melden uns schnellstmï¿½glich bei Ihnen.
 					</CardDescription>
 				</CardHeader>
 				<CardContent>
@@ -104,7 +109,7 @@
 								<Input
 									id="name"
 									bind:value={formData.name}
-									placeholder="Ihr vollständiger Name"
+									placeholder="Ihr vollstï¿½ndiger Name"
 									required
 									class="transition-colors focus:ring-2 focus:ring-primary/20"
 								/>
@@ -154,7 +159,7 @@
 						</Button>
 
 						<p class="text-xs text-muted-foreground text-center">
-							Mit dem Absenden stimmen Sie unserer Datenschutzerklärung zu.
+							Mit dem Absenden stimmen Sie unserer Datenschutzerklï¿½rung zu.
 						</p>
 					</form>
 				</CardContent>

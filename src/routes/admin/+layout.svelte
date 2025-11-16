@@ -1,21 +1,22 @@
 <script>
 	import RootWrapper from '$lib/components/RootWrapper.svelte';
+	import SectionRenderer from '$lib/components/admin/SectionRenderer.svelte';
+	import EmptySection from '$lib/components/admin/EmptySection.svelte';
+	import SectionSelector from '$lib/components/admin/SectionSelector.svelte';
+	import SectionEditor from '$lib/components/admin/SectionEditor.svelte';
+	import { pageStore } from '$lib/stores/pageStore.svelte';
 	import { onMount, tick } from 'svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card';
 
-	// Import page components
-	import HomePage from '../(pages)/+page.svelte';
-	import UeberMichPage from '../(pages)/ueber-mich/+page.svelte';
-	import KontaktPage from '../(pages)/kontakt/+page.svelte';
-
 	let isAuthenticated = $state(false);
 	let pat = $state('');
 	let error = $state('');
 	let loading = $state(false);
-	let selectedPath = $state('/');
+	let isPublishing = $state(false);
+	let publishError = $state('');
 
 	// Canvas state
 	let zoom = $state(1);
@@ -26,6 +27,11 @@
 	let canvasElement = $state(/** @type {HTMLElement|null} */ (null));
 	/** @type {HTMLDivElement|null} */
 	let devicesWrapper = $state(/** @type {HTMLDivElement|null} */ (null));
+
+	// New page dialog state
+	let showNewPageDialog = $state(false);
+	let newPageName = $state('');
+	let newPagePath = $state('');
 
 	const MIN_ZOOM = 0.2;
 	const MAX_ZOOM = 2.1;
@@ -55,51 +61,251 @@
 		{ label: 'Mobile', width: 375 }
 	];
 
-	// Page configuration
-	const pages = [
-		{ path: '/', label: 'Home', component: HomePage },
-		{ path: '/ueber-mich', label: 'Über Mich', component: UeberMichPage },
-		{ path: '/kontakt', label: 'Kontakt', component: KontaktPage }
+	const responsiveBreakpoints = [
+		{ prefix: 'sm', min: 640 },
+		{ prefix: 'md', min: 768 },
+		{ prefix: 'lg', min: 1024 },
+		{ prefix: 'xl', min: 1280 },
+		{ prefix: '2xl', min: 1536 }
 	];
 
-	// Get current page component
-	let CurrentPageComponent = $derived(
-		pages.find(p => p.path === selectedPath)?.component || HomePage
-	);
+	/** @type {Map<string, ReturnType<typeof createDevicePreviewState>>} */
+	const deviceStates = new Map();
 
-	onMount(() => {
-		const storedPat = localStorage.getItem('github_pat');
-		if (storedPat) {
-			isAuthenticated = true;
-			pat = storedPat;
+	function registerDevice(viewport, element) {
+		if (!viewport) return;
+		const existing = deviceStates.get(viewport.label);
+		if (existing) {
+			existing.disconnect();
+			deviceStates.delete(viewport.label);
 		}
-	});
+
+		if (!element) return;
+
+		const state = createDevicePreviewState(element, viewport.width);
+		deviceStates.set(viewport.label, state);
+	}
+
+	function scheduleAllDevices() {
+		for (const state of deviceStates.values()) {
+			state.schedule();
+		}
+	}
+
+	function createDevicePreviewState(element, width) {
+		const originalClasses = new WeakMap();
+		const appliedClasses = new WeakMap();
+
+		let scheduled = false;
+		let disconnected = false;
+
+		function filterClasses() {
+			if (disconnected) return;
+
+			const walker = document.createTreeWalker(
+				element,
+				NodeFilter.SHOW_ELEMENT,
+				null
+			);
+
+			const elements = [element];
+			let node;
+			while ((node = walker.nextNode())) {
+				if (node instanceof HTMLElement) {
+					elements.push(node);
+				}
+			}
+
+			for (const el of elements) {
+				if (!(el instanceof HTMLElement)) continue;
+
+				if (!originalClasses.has(el)) {
+					originalClasses.set(el, el.className);
+				}
+
+				const original = originalClasses.get(el);
+				if (!original) continue;
+
+				const classes = original.split(/\s+/).filter(cls => {
+					if (!cls.includes(':')) return true;
+
+					for (const bp of responsiveBreakpoints) {
+						if (cls.startsWith(`${bp.prefix}:`)) {
+							return width >= bp.min;
+						}
+						if (cls.startsWith(`max-${bp.prefix}:`)) {
+							return width < bp.min;
+						}
+					}
+
+					return true;
+				});
+
+				const newClassName = classes.join(' ');
+				if (el.className !== newClassName) {
+					el.className = newClassName;
+				}
+				appliedClasses.set(el, newClassName);
+			}
+
+			scheduled = false;
+		}
+
+		function schedule() {
+			if (scheduled || disconnected) return;
+			scheduled = true;
+			requestAnimationFrame(filterClasses);
+		}
+
+		const observer = new MutationObserver((mutations) => {
+			if (disconnected) return;
+			for (const mutation of mutations) {
+				if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+					const target = mutation.target;
+					if (!(target instanceof HTMLElement)) continue;
+					const current = appliedClasses.get(target);
+					if (current && target.className !== current) {
+						originalClasses.set(target, target.className);
+						schedule();
+					}
+				}
+			}
+			schedule();
+		});
+
+		observer.observe(element, {
+			childList: true,
+			subtree: true,
+			attributes: true,
+			attributeFilter: ['class']
+		});
+
+		schedule();
+
+		return {
+			schedule,
+			disconnect: () => {
+				disconnected = true;
+				observer.disconnect();
+			}
+		};
+	}
+
+	function devicePreview(node, viewport) {
+		registerDevice(viewport, node);
+		return {
+			destroy() {
+				const state = deviceStates.get(viewport?.label);
+				if (state) {
+					state.disconnect();
+					deviceStates.delete(viewport.label);
+				}
+			}
+		};
+	}
+
+	/** @param {MouseEvent} event */
+	function handleMouseDown(event) {
+		if (event.button !== 0) return;
+		isDragging = true;
+		dragStart = { x: event.clientX - pan.x, y: event.clientY - pan.y };
+	}
+
+	/** @param {MouseEvent} event */
+	function handleMouseMove(event) {
+		if (!isDragging) return;
+		pan = {
+			x: event.clientX - dragStart.x,
+			y: event.clientY - dragStart.y
+		};
+	}
+
+	function handleMouseUp() {
+		isDragging = false;
+	}
+
+	/** @param {WheelEvent} event */
+	function handleWheel(event) {
+		event.preventDefault();
+
+		const deltaY = event.deltaMode === WheelEvent.DOM_DELTA_LINE
+			? event.deltaY * LINE_DELTA_MULTIPLIER
+			: event.deltaY;
+
+		const absY = Math.abs(deltaY);
+		const absX = Math.abs(event.deltaX);
+		const shouldZoom = (event.ctrlKey || event.metaKey) || absX < WHEEL_GUARD_THRESHOLD;
+
+		if (shouldZoom) {
+			const pointer = pointerRelativeToCanvas(event);
+			const scaledPoint = {
+				x: (pointer.x - pan.x) / zoom,
+				y: (pointer.y - pan.y) / zoom
+			};
+			const delta = -deltaY * ZOOM_SENSITIVITY;
+			const newZoom = clamp(zoom + delta, MIN_ZOOM, MAX_ZOOM);
+			const zoomRatio = newZoom / zoom;
+
+			pan = {
+				x: pointer.x - scaledPoint.x * newZoom,
+				y: pointer.y - scaledPoint.y * newZoom
+			};
+			zoom = newZoom;
+		} else {
+			pan = {
+				x: pan.x - event.deltaX * PAN_MULTIPLIER,
+				y: pan.y - deltaY * PAN_MULTIPLIER
+			};
+		}
+	}
+
+	async function fitToView() {
+		if (!canvasElement || !devicesWrapper) return;
+
+		await tick();
+
+		const canvasRect = canvasElement.getBoundingClientRect();
+		const devicesRect = devicesWrapper.getBoundingClientRect();
+
+		const availableWidth = canvasRect.width;
+		const availableHeight = canvasRect.height;
+		const contentWidth = viewports[0].width;
+		const contentHeight = devicesRect.height / zoom;
+
+		const scaleX = (availableWidth * FIT_MARGIN) / contentWidth;
+		const scaleY = (availableHeight * FIT_MARGIN) / contentHeight;
+		const newZoom = clamp(Math.min(scaleX, scaleY), MIN_ZOOM, MAX_ZOOM);
+
+		const scaledWidth = contentWidth * newZoom;
+		const scaledHeight = contentHeight * newZoom;
+
+		pan = {
+			x: (availableWidth - scaledWidth) / 2,
+			y: (availableHeight - scaledHeight - LABEL_BUFFER) / 2
+		};
+		zoom = newZoom;
+	}
 
 	async function handleLogin() {
-		if (!pat.trim()) {
-			error = 'Bitte geben Sie einen GitHub Personal Access Token ein';
-			return;
-		}
-
 		loading = true;
 		error = '';
 
 		try {
 			const response = await fetch('https://api.github.com/repos/knuspermixx/NoCMS', {
 				headers: {
-					Authorization: `Bearer ${pat}`,
-					Accept: 'application/vnd.github.v3+json'
+					'Authorization': `Bearer ${pat}`,
+					'Accept': 'application/vnd.github.v3+json'
 				}
 			});
 
-			if (!response.ok) {
-				throw new Error('Ungültiger Token oder keine Berechtigung');
+			if (response.ok) {
+				localStorage.setItem('github_pat', pat);
+				isAuthenticated = true;
+			} else {
+				error = 'Ungültiger Access Token';
 			}
-
-			localStorage.setItem('github_pat', pat);
-			isAuthenticated = true;
-		} catch {
-			error = 'Authentifizierung fehlgeschlagen. Bitte überprüfen Sie Ihren Token und Repository-Zugriff.';
+		} catch (e) {
+			error = 'Fehler beim Verbinden mit GitHub';
 		} finally {
 			loading = false;
 		}
@@ -109,145 +315,114 @@
 		localStorage.removeItem('github_pat');
 		isAuthenticated = false;
 		pat = '';
-		selectedPath = '/';
 	}
 
-	// Canvas Pan functionality
-	/** @param {MouseEvent} e */
-	function handleMouseDown(e) {
-		if (!canvasElement) return;
-		e.preventDefault();
-		canvasElement.focus();
-		isDragging = true;
-		dragStart = { x: e.clientX - pan.x, y: e.clientY - pan.y };
+	function handleAddPage() {
+		if (!newPageName.trim() || !newPagePath.trim()) return;
+
+		pageStore.addPage(newPageName, newPagePath);
+		newPageName = '';
+		newPagePath = '';
+		showNewPageDialog = false;
 	}
 
-	/** @param {MouseEvent} e */
-	function handleMouseMove(e) {
-		if (!isDragging) return;
-		pan = {
-			x: e.clientX - dragStart.x,
-			y: e.clientY - dragStart.y
-		};
+	function handleAddSection(pageId) {
+		pageStore.toggleAddSectionMode();
 	}
 
-	function handleMouseUp() {
-		isDragging = false;
+	function handleSectionSelect(sectionType) {
+		if (!pageStore.currentPageId) return;
+		pageStore.addSection(pageStore.currentPageId, sectionType);
 	}
 
-	// Canvas Scroll functionality
-	/** @param {WheelEvent} event */
-	function handleWheel(event) {
-		event.preventDefault();
-		if (!canvasElement) return;
+	function handleSectionDelete(pageId, sectionId) {
+		pageStore.deleteSection(pageId, sectionId);
+	}
 
-		const position = pointerRelativeToCanvas(event);
-		const isZoomGesture = event.ctrlKey || event.metaKey;
-		const multiplier = event.deltaMode === WheelEvent.DOM_DELTA_LINE ? LINE_DELTA_MULTIPLIER : 1;
-		const deltaX = event.deltaX * multiplier;
-		const deltaY = event.deltaY * multiplier;
+	function handleSectionClick(sectionId) {
+		pageStore.selectSection(sectionId);
+	}
 
-		if (isZoomGesture) {
-			const zoomFactor = Math.pow(2, -deltaY * ZOOM_SENSITIVITY);
-			const nextZoom = clamp(zoom * zoomFactor, MIN_ZOOM, MAX_ZOOM);
-			const contentX = (position.x - pan.x) / zoom;
-			const contentY = (position.y - pan.y) / zoom;
+	function handleSectionUpdate(newProps) {
+		if (!pageStore.currentPageId || !pageStore.selectedSectionId) return;
+		pageStore.updateSection(pageStore.currentPageId, pageStore.selectedSectionId, newProps);
+	}
 
-			pan = {
-				x: position.x - contentX * nextZoom,
-				y: position.y - contentY * nextZoom
-			};
+	function handleCloseEditor() {
+		pageStore.selectSection(null);
+	}
 
-			zoom = nextZoom;
-		} else {
-			if (Math.abs(deltaX) > WHEEL_GUARD_THRESHOLD || Math.abs(deltaY) > WHEEL_GUARD_THRESHOLD) {
-				event.preventDefault();
+	function handleUndo() {
+		pageStore.undo();
+	}
+
+	function handleRedo() {
+		pageStore.redo();
+	}
+
+	async function handlePublish() {
+		if (!pat || isPublishing) return;
+
+		isPublishing = true;
+		publishError = '';
+
+		try {
+			// 1. Save pages to file
+			const saveResponse = await fetch('/api/save-pages', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					pages: pageStore.pages,
+					pat
+				})
+			});
+
+			if (!saveResponse.ok) {
+				throw new Error('Failed to save pages');
 			}
-			pan = {
-				x: pan.x - deltaX * PAN_MULTIPLIER,
-				y: pan.y - deltaY * PAN_MULTIPLIER
-			};
+
+			// 2. Commit and push to git
+			const commitResponse = await fetch('/api/git-commit', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					message: 'Update pages from CMS',
+					pat
+				})
+			});
+
+			if (!commitResponse.ok) {
+				throw new Error('Failed to commit changes');
+			}
+
+			// Mark as published
+			pageStore.markAsPublished();
+		} catch (err) {
+			publishError = err instanceof Error ? err.message : 'Failed to publish';
+			console.error('Publish error:', err);
+		} finally {
+			isPublishing = false;
 		}
 	}
 
-	/** @param {number} width */
-	function deviceHeightForWidth(width) {
-		if (width <= 480) return 812; // small/mobile
-		if (width <= 1024) return 1024; // tablet
-		return 900; // desktop
-	}
-
-	function fitDesktopToCanvas() {
-		if (typeof window === 'undefined') return;
-		if (!canvasElement || !devicesWrapper) return;
-
-		const canvasRect = canvasElement.getBoundingClientRect();
-		if (canvasRect.width === 0 || canvasRect.height === 0) return;
-
-		const styles = window.getComputedStyle(devicesWrapper);
-		const paddingLeft = parseFloat(styles.paddingLeft) || 0;
-		const paddingRight = parseFloat(styles.paddingRight) || 0;
-		const paddingTop = parseFloat(styles.paddingTop) || 0;
-		const paddingBottom = parseFloat(styles.paddingBottom) || 0;
-
-		const desktopViewport = viewports[0];
-		const desktopWidth = desktopViewport.width;
-		const desktopHeight = deviceHeightForWidth(desktopWidth);
-
-		const baseWidth = desktopWidth + paddingLeft + paddingRight;
-		const baseHeight = desktopHeight + paddingTop + paddingBottom + LABEL_BUFFER;
-
-		const targetZoom = clamp(
-			Math.min(
-				canvasRect.width / baseWidth,
-				canvasRect.height / baseHeight
-			) * FIT_MARGIN,
-			MIN_ZOOM,
-			MAX_ZOOM
-		);
-
-		const desktopCenterX = paddingLeft + desktopWidth / 2;
-		const desktopCenterY = paddingTop + LABEL_BUFFER + desktopHeight / 2;
-
-		const nextPan = {
-			x: canvasRect.width / 2 - desktopCenterX * targetZoom,
-			y: canvasRect.height / 2 - desktopCenterY * targetZoom
-		};
-
-		zoom = targetZoom;
-		pan = nextPan;
-	}
-
+	// Auto-save to localStorage
 	$effect(() => {
-		if (typeof window === 'undefined') return;
-		const element = canvasElement;
-		const content = devicesWrapper;
-		if (!element || !content) return;
-
-		const resize = () => fitDesktopToCanvas();
-		resize();
-
-		const observer = new ResizeObserver(resize);
-		observer.observe(element);
-		observer.observe(content);
-		window.addEventListener('resize', resize);
-
-		return () => {
-			observer.disconnect();
-			window.removeEventListener('resize', resize);
-		};
+		pageStore.saveToLocalStorage();
 	});
 
-	$effect(async () => {
-		selectedPath;
-		await tick();
-		fitDesktopToCanvas();
+	onMount(() => {
+		const storedPat = localStorage.getItem('github_pat');
+		if (storedPat) {
+			pat = storedPat;
+			handleLogin();
+		}
+
+		// Load from localStorage
+		pageStore.loadFromLocalStorage();
+
+		// Fit to view after mount
+		setTimeout(fitToView, 100);
 	});
-
-
-	// Simpler approach: don't run DOM-parsing JS. Instead use CSS-based preview rules
-	// that scope common viewport-driven utilities inside `.admin-device`. This avoids
-	// modifying components and keeps the admin preview lightweight.
 </script>
 
 {#if !isAuthenticated}
@@ -291,10 +466,58 @@
 	<div class="flex h-screen flex-col bg-background">
 		<!-- Top Bar -->
 		<header class="flex h-14 items-center justify-between border-b bg-card px-6">
-			<h1 class="text-lg font-semibold">Admin Panel</h1>
-			<Button variant="outline" size="sm" onclick={handleLogout}>
-				Abmelden
-			</Button>
+			<div class="flex items-center gap-4">
+				<h1 class="text-lg font-semibold">Admin Panel</h1>
+
+				<!-- Undo/Redo Buttons -->
+				<div class="flex items-center gap-1">
+					<Button
+						variant="ghost"
+						size="icon-sm"
+						onclick={handleUndo}
+						disabled={!pageStore.canUndo}
+						title="Rückgängig (Cmd+Z)"
+					>
+						<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<path d="M3 7v6h6"/>
+							<path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/>
+						</svg>
+					</Button>
+					<Button
+						variant="ghost"
+						size="icon-sm"
+						onclick={handleRedo}
+						disabled={!pageStore.canRedo}
+						title="Wiederholen (Cmd+Shift+Z)"
+					>
+						<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<path d="M21 7v6h-6"/>
+							<path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/>
+						</svg>
+					</Button>
+				</div>
+
+				{#if pageStore.isDirty}
+					<span class="text-xs text-muted-foreground">• Ungespeicherte Änderungen</span>
+				{/if}
+			</div>
+
+			<div class="flex items-center gap-2">
+				{#if publishError}
+					<span class="text-xs text-destructive">{publishError}</span>
+				{/if}
+				<Button
+					variant="default"
+					size="sm"
+					disabled={!pageStore.isDirty || isPublishing}
+					onclick={handlePublish}
+				>
+					{isPublishing ? 'Publishing...' : 'Publish'}
+				</Button>
+				<Button variant="outline" size="sm" onclick={handleLogout}>
+					Abmelden
+				</Button>
+			</div>
 		</header>
 
 		<!-- Main Content Area -->
@@ -302,16 +525,63 @@
 			<!-- Left Sidebar -->
 			<aside class="w-64 border-r bg-card">
 				<div class="flex h-full flex-col p-4">
-					<nav class="space-y-1">
-						<div class="mb-2 px-3 text-xs font-semibold uppercase text-muted-foreground">
+					<div class="mb-4 flex items-center justify-between">
+						<div class="px-3 text-xs font-semibold uppercase text-muted-foreground">
 							Seiten
 						</div>
-						{#each pages as pageItem}
+						<Button
+							variant="ghost"
+							size="icon-sm"
+							onclick={() => showNewPageDialog = !showNewPageDialog}
+							title="Neue Seite"
+						>
+							<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<path d="M5 12h14"/>
+								<path d="M12 5v14"/>
+							</svg>
+						</Button>
+					</div>
+
+					{#if showNewPageDialog}
+						<Card class="mb-4">
+							<CardContent class="p-4 space-y-3">
+								<div class="space-y-2">
+									<Label for="page-name" class="text-xs">Seitenname</Label>
+									<Input
+										id="page-name"
+										bind:value={newPageName}
+										placeholder="z.B. Über uns"
+										class="h-8 text-sm"
+									/>
+								</div>
+								<div class="space-y-2">
+									<Label for="page-path" class="text-xs">Pfad</Label>
+									<Input
+										id="page-path"
+										bind:value={newPagePath}
+										placeholder="z.B. /ueber-uns"
+										class="h-8 text-sm"
+									/>
+								</div>
+								<div class="flex gap-2">
+									<Button size="sm" onclick={handleAddPage} class="flex-1">
+										Erstellen
+									</Button>
+									<Button size="sm" variant="ghost" onclick={() => showNewPageDialog = false} class="flex-1">
+										Abbrechen
+									</Button>
+								</div>
+							</CardContent>
+						</Card>
+					{/if}
+
+					<nav class="space-y-1">
+						{#each pageStore.pages as page}
 							<button
-								onclick={() => selectedPath = pageItem.path}
-								class="w-full rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-accent {selectedPath === pageItem.path ? 'bg-accent font-medium' : ''}"
+								onclick={() => pageStore.setCurrentPage(page.id)}
+								class="w-full rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-accent {pageStore.currentPageId === page.id ? 'bg-accent font-medium' : ''}"
 							>
-								{pageItem.label}
+								{page.label}
 							</button>
 						{/each}
 					</nav>
@@ -350,13 +620,34 @@
 					style="transform: scale({zoom}); transform-origin: 0 0; transition: transform 0.08s cubic-bezier(0.16, 1, 0.3, 1);"
 					>
 						{#each viewports as viewport}
-							<div class="flex flex-col gap-5">
-								<div class="text-center text-sm font-medium text-muted-foreground">
-									{viewport.label} ({viewport.width}px)
+							<div class="flex flex-col items-center gap-6">
+								<div class="rounded-md bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm">
+									{viewport.label}
 								</div>
-								<div class="admin-device" style="width: {viewport.width}px; --preview-100vh: {deviceHeightForWidth(viewport.width)}px; overflow:visible; transform: translateZ(0); position:relative;">
+
+								<div
+									use:devicePreview={viewport}
+									class="admin-device overflow-hidden rounded-lg bg-background shadow-2xl"
+									style="width: {viewport.width}px; --preview-100vh: 600px;"
+								>
 									<RootWrapper preview={true}>
-										<CurrentPageComponent />
+										{#if pageStore.currentPage}
+											{#each pageStore.currentPage.sections as section}
+												<SectionRenderer
+													{section}
+													isSelected={section.id === pageStore.selectedSectionId}
+													onClick={() => handleSectionClick(section.id)}
+													onDelete={() => handleSectionDelete(pageStore.currentPageId, section.id)}
+												/>
+											{/each}
+
+											<!-- Empty section at the end -->
+											<EmptySection onAddSection={() => handleAddSection(pageStore.currentPageId)} />
+										{:else}
+											<div class="flex min-h-screen items-center justify-center text-muted-foreground">
+												Keine Seite ausgewählt
+											</div>
+										{/if}
 									</RootWrapper>
 								</div>
 							</div>
@@ -367,14 +658,23 @@
 
 			<!-- Right Sidebar -->
 			<aside class="w-64 border-l bg-card">
-				<div class="p-4">
-					<div class="text-sm text-muted-foreground">
-						<!-- Tools/widgets can be added here -->
+				{#if pageStore.selectedSection}
+					<SectionEditor
+						section={pageStore.selectedSection}
+						onUpdate={handleSectionUpdate}
+						onClose={handleCloseEditor}
+					/>
+				{:else if pageStore.isAddingSectionMode}
+					<SectionSelector
+						onSelect={handleSectionSelect}
+						onCancel={() => pageStore.toggleAddSectionMode()}
+					/>
+				{:else}
+					<div class="flex h-full items-center justify-center p-4 text-center text-sm text-muted-foreground">
+						Klicken Sie auf eine Section zum Bearbeiten oder auf "+ Section" um hinzuzufügen
 					</div>
-				</div>
+				{/if}
 			</aside>
 		</div>
 	</div>
 {/if}
-
-<!-- admin preview CSS moved to global stylesheet -->

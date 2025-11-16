@@ -1,6 +1,23 @@
 <script>
 	import { Button } from '$lib/components/ui/button';
 	import { Badge } from '$lib/components/ui/badge';
+
+	let {
+		badge = '🚀 Neue Website? Perfekt!',
+		title = 'Digitale Lösungen, die',
+		titleHighlight = 'begeistern',
+		description = 'Wir entwickeln maßgeschneiderte Web- und Mobile-Anwendungen, die Ihr Unternehmen voranbringen und Ihre Kunden begeistern.',
+		primaryButtonText = 'Projekt starten',
+		primaryButtonLink = '#',
+		secondaryButtonText = 'Portfolio ansehen',
+		secondaryButtonLink = '#',
+		stats = [
+			{ value: '150+', label: 'Projekte' },
+			{ value: '50+', label: 'Kunden' },
+			{ value: '5★', label: 'Bewertung' },
+			{ value: '24/7', label: 'Support' }
+		]
+	} = $props();
 </script>
 
 <section class="relative flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 overflow-hidden"
@@ -20,16 +37,16 @@
 			<!-- Badge -->
 			<div class="animate-fade-in" style="animation-delay: 0.2s;">
 				<Badge variant="secondary" class="text-sm px-4 py-2">
-					🚀 Neue Website? Perfekt!
+					{badge}
 				</Badge>
 			</div>
 
 			<!-- Main Heading -->
 			<div class="animate-fade-in" style="animation-delay: 0.4s;">
 				<h1 class="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-foreground">
-					Digitale Lösungen, die
+					{title}
 					<span class="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-						begeistern
+						{titleHighlight}
 					</span>
 				</h1>
 			</div>
@@ -37,40 +54,29 @@
 			<!-- Description -->
 			<div class="animate-fade-in" style="animation-delay: 0.6s;">
 				<p class="text-xl lg:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-					Wir entwickeln maßgeschneiderte Web- und Mobile-Anwendungen, die Ihr Unternehmen
-					voranbringen und Ihre Kunden begeistern.
+					{description}
 				</p>
 			</div>
 
 			<!-- CTA Buttons -->
 			<div class="animate-fade-in flex flex-col sm:flex-row gap-4 justify-center items-center pt-4" style="animation-delay: 0.8s;">
-				<Button size="lg" class="text-lg px-8 py-6 h-auto shadow-lg hover:shadow-xl transition-all duration-300">
-					Projekt starten
+				<Button href={primaryButtonLink} size="lg" class="text-lg px-8 py-6 h-auto shadow-lg hover:shadow-xl transition-all duration-300">
+					{primaryButtonText}
 				</Button>
-				<Button variant="outline" size="lg" class="text-lg px-8 py-6 h-auto border-2 hover:bg-muted/50 transition-all duration-300">
-					Portfolio ansehen
+				<Button href={secondaryButtonLink} variant="outline" size="lg" class="text-lg px-8 py-6 h-auto border-2 hover:bg-muted/50 transition-all duration-300">
+					{secondaryButtonText}
 				</Button>
 			</div>
 
 			<!-- Stats -->
 			<div class="animate-fade-in pt-16" style="animation-delay: 1s;">
 				<div class="flex flex-wrap justify-center gap-8 text-center">
-					<div class="space-y-1">
-						<div class="text-3xl font-bold text-foreground">150+</div>
-						<div class="text-sm text-muted-foreground">Projekte</div>
-					</div>
-					<div class="space-y-1">
-						<div class="text-3xl font-bold text-foreground">50+</div>
-						<div class="text-sm text-muted-foreground">Kunden</div>
-					</div>
-					<div class="space-y-1">
-						<div class="text-3xl font-bold text-foreground">5★</div>
-						<div class="text-sm text-muted-foreground">Bewertung</div>
-					</div>
-					<div class="space-y-1">
-						<div class="text-3xl font-bold text-foreground">24/7</div>
-						<div class="text-sm text-muted-foreground">Support</div>
-					</div>
+					{#each stats as stat}
+						<div class="space-y-1">
+							<div class="text-3xl font-bold text-foreground">{stat.value}</div>
+							<div class="text-sm text-muted-foreground">{stat.label}</div>
+						</div>
+					{/each}
 				</div>
 			</div>
 		</div>

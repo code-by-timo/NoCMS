@@ -21,3 +21,7 @@ Thumbs.db
 # Vite
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Generated pages (auto-generated from pages.json)
+src/routes/(pages)/**/*.svelte
+!src/routes/(pages)/+layout.js

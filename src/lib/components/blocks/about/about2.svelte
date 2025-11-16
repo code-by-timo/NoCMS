@@ -2,19 +2,24 @@
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Separator } from '$lib/components/ui/separator';
+
+	let {
+		badge = 'Unser Ansatz',
+		title = 'Innovation trifft auf Erfahrung',
+		description = 'Wir kombinieren neueste Technologien mit bewÃ¤hrten Methoden, um auÃŸergewÃ¶hnliche digitale Erlebnisse zu schaffen, die messbare Ergebnisse liefern.'
+	} = $props();
 </script>
 
 <section class="py-24 bg-muted/30">
 	<div class="container mx-auto px-4">
 		<!-- Header -->
 		<div class="text-center max-w-3xl mx-auto space-y-6 mb-16">
-			<Badge variant="secondary" class="w-fit">Unser Ansatz</Badge>
+			<Badge variant="secondary" class="w-fit">{badge}</Badge>
 			<h2 class="text-4xl lg:text-5xl font-bold tracking-tight text-foreground">
-				Innovation trifft auf Erfahrung
+				{title}
 			</h2>
 			<p class="text-lg text-muted-foreground leading-relaxed">
-				Wir kombinieren neueste Technologien mit bewährten Methoden, um außergewöhnliche digitale
-				Erlebnisse zu schaffen, die messbare Ergebnisse liefern.
+				{description}
 			</p>
 			<Separator class="w-20 mx-auto" />
 		</div>
@@ -30,7 +35,7 @@
 				</CardHeader>
 				<CardContent class="pt-0">
 					<p class="text-muted-foreground">
-						Wir analysieren Ihre Geschäftsziele und entwickeln maßgeschneiderte digitale Strategien.
+						Wir analysieren Ihre Geschï¿½ftsziele und entwickeln maï¿½geschneiderte digitale Strategien.
 					</p>
 				</CardContent>
 			</Card>
@@ -44,7 +49,7 @@
 				</CardHeader>
 				<CardContent class="pt-0">
 					<p class="text-muted-foreground">
-						Schnelle Iterationen und kontinuierliches Feedback für optimale Ergebnisse.
+						Schnelle Iterationen und kontinuierliches Feedback fï¿½r optimale Ergebnisse.
 					</p>
 				</CardContent>
 			</Card>
@@ -81,7 +86,7 @@
 				</div>
 				<div class="text-center space-y-2">
 					<div class="text-3xl font-bold text-primary"></div>
-					<div class="text-sm text-muted-foreground uppercase tracking-wide">Möglichkeiten</div>
+					<div class="text-sm text-muted-foreground uppercase tracking-wide">Mï¿½glichkeiten</div>
 				</div>
 			</div>
 		</div>
