@@ -7,11 +7,18 @@
       {
         "id": "home-hero",
         "type": "hero1",
-        "props": {}
+        "props": {
+          "title": "teasd"
+        }
       },
       {
         "id": "home-about",
         "type": "about1",
+        "props": {}
+      },
+      {
+        "id": "home-contact",
+        "type": "contact1",
         "props": {}
       }
     ]
@@ -42,31 +49,6 @@
         "id": "kontakt-contact",
         "type": "contact1",
         "props": {}
-      }
-    ]
-  },
-  {
-    "id": "test",
-    "path": "/test",
-    "label": "test",
-    "sections": [
-      {
-        "id": "test-hero1-1763307088947",
-        "type": "hero1",
-        "props": {
-          "title": "Willkommen",
-          "subtitle": "Dies ist ein neuer Hero-Bereich",
-          "buttonText": "Mehr erfahren",
-          "buttonLink": "#"
-        }
-      },
-      {
-        "id": "test-contact1-1763307255799",
-        "type": "contact1",
-        "props": {
-          "title": "Kontakt",
-          "description": "Nehmen Sie Kontakt mit uns auf"
-        }
       }
     ]
   }
