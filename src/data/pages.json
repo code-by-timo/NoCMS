@@ -1,0 +1,75 @@
+[
+  {
+    "id": "home",
+    "path": "/",
+    "label": "Home",
+    "sections": [
+      {
+        "id": "home-hero",
+        "type": "hero1",
+        "props": {}
+      },
+      {
+        "id": "home-about",
+        "type": "about1",
+        "props": {}
+      }
+    ]
+  },
+  {
+    "id": "ueber-mich",
+    "path": "/ueber-mich",
+    "label": "Über Mich",
+    "sections": [
+      {
+        "id": "ueber-hero",
+        "type": "hero2",
+        "props": {}
+      },
+      {
+        "id": "ueber-about",
+        "type": "about2",
+        "props": {}
+      }
+    ]
+  },
+  {
+    "id": "kontakt",
+    "path": "/kontakt",
+    "label": "Kontakt",
+    "sections": [
+      {
+        "id": "kontakt-contact",
+        "type": "contact1",
+        "props": {}
+      },
+      {
+        "id": "kontakt-about1-1763307035439",
+        "type": "about1",
+        "props": {
+          "title": "Über uns",
+          "description": "Beschreibung hier einfügen",
+          "buttonText": "Mehr erfahren",
+          "buttonLink": "#"
+        }
+      }
+    ]
+  },
+  {
+    "id": "test",
+    "path": "/test",
+    "label": "test",
+    "sections": [
+      {
+        "id": "test-hero1-1763307088947",
+        "type": "hero1",
+        "props": {
+          "title": "Willkommen",
+          "subtitle": "Dies ist ein neuer Hero-Bereich",
+          "buttonText": "Mehr erfahren",
+          "buttonLink": "#"
+        }
+      }
+    ]
+  }
+]
