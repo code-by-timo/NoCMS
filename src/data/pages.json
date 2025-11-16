@@ -51,5 +51,22 @@
         "props": {}
       }
     ]
+  },
+  {
+    "id": "test",
+    "path": "/test",
+    "label": "test",
+    "sections": [
+      {
+        "id": "test-hero1-1763337020520",
+        "type": "hero1",
+        "props": {
+          "title": "Willkommen",
+          "subtitle": "Dies ist ein neuer Hero-Bereich",
+          "buttonText": "Mehr erfahren",
+          "buttonLink": "#"
+        }
+      }
+    ]
   }
 ]
