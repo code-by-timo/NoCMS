@@ -1,5 +1,7 @@
 import adapter from '@sveltejs/adapter-static';
 
+const dev = process.env.NODE_ENV !== 'production';
+
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
 	kit: {
@@ -11,7 +13,11 @@ const config = {
 			strict: false // Allow mix of static and dynamic routes
 		}),
 		paths: {
-			base: process.env.NODE_ENV === 'production' ? '/NoCMS' : ''
+			base: dev ? '' : '/NoCMS'
+		},
+		prerender: {
+			origin: 'https://code-by-timo.github.io',
+			handleHttpError: 'warn'
 		}
 	}
 };
