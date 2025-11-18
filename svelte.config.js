@@ -9,7 +9,10 @@ const config = {
 		adapter: adapter({
 			fallback: '404.html', // GitHub Pages uses 404.html as SPA fallback
 			strict: false // Allow mix of static and dynamic routes
-		})
+		}),
+		paths: {
+			base: process.env.NODE_ENV === 'production' ? '/NoCMS' : ''
+		}
 	}
 };
 
