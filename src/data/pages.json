@@ -68,5 +68,11 @@
         }
       }
     ]
+  },
+  {
+    "id": "lol",
+    "path": "/lol",
+    "label": "Lol",
+    "sections": []
   }
 ]
