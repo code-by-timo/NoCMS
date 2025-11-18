@@ -5,6 +5,8 @@
 	import SectionSelector from '$lib/components/admin/SectionSelector.svelte';
 	import SectionEditor from '$lib/components/admin/SectionEditor.svelte';
 	import { pageStore } from '$lib/stores/pageStore.svelte';
+	import { GitHubAPI } from '$lib/utils/github-api';
+	import { githubConfig } from '$lib/config/github';
 	import { onMount, tick } from 'svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
@@ -291,16 +293,15 @@
 		error = '';
 
 		try {
-			const response = await fetch('https://api.github.com/repos/knuspermixx/NoCMS', {
-				headers: {
-					'Authorization': `Bearer ${pat}`,
-					'Accept': 'application/vnd.github.v3+json'
-				}
-			});
+			const githubAPI = new GitHubAPI(pat, githubConfig);
+			const isValid = await githubAPI.validatePAT();
 
-			if (response.ok) {
+			if (isValid) {
 				localStorage.setItem('github_pat', pat);
 				isAuthenticated = true;
+
+				// Load pages from GitHub after successful login
+				await pageStore.loadFromGitHub(pat, githubConfig);
 			} else {
 				error = 'Ungültiger Access Token';
 			}
@@ -367,32 +368,28 @@
 		publishError = '';
 
 		try {
-			// 1. Save pages to file
-			const saveResponse = await fetch('/api/save-pages', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					pages: pageStore.pages,
-					pat
-				})
-			});
+			// Create GitHub API instance
+			const githubAPI = new GitHubAPI(pat, githubConfig);
 
-			if (!saveResponse.ok) {
-				throw new Error('Failed to save pages');
-			}
+			// Prepare the pages.json content
+			const pagesContent = JSON.stringify(pageStore.pages, null, 2);
 
-			// 2. Commit and push to git
-			const commitResponse = await fetch('/api/git-commit', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					message: 'Update pages from CMS',
-					pat
-				})
-			});
+			// Commit and push to GitHub
+			await githubAPI.commitAndPush(
+				'src/data/pages.json',
+				pagesContent,
+				'Update pages from CMS'
+			);
 
-			if (!commitResponse.ok) {
-				throw new Error('Failed to commit changes');
+			// Update local pages.json (for dev server)
+			try {
+				await fetch('/api/update-local-pages', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(pageStore.pages)
+				});
+			} catch {
+				// Silently fail if dev server is not running
 			}
 
 			// Mark as published
@@ -410,15 +407,12 @@
 		pageStore.saveToLocalStorage();
 	});
 
-	onMount(() => {
+	onMount(async () => {
 		const storedPat = localStorage.getItem('github_pat');
 		if (storedPat) {
 			pat = storedPat;
-			handleLogin();
+			await handleLogin();
 		}
-
-		// Load from localStorage
-		pageStore.loadFromLocalStorage();
 
 		// Fit to view after mount
 		setTimeout(fitToView, 100);
@@ -576,14 +570,27 @@
 					{/if}
 
 					<nav class="space-y-1">
-						{#each pageStore.pages as page}
-							<button
-								onclick={() => pageStore.setCurrentPage(page.id)}
-								class="w-full rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-accent {pageStore.currentPageId === page.id ? 'bg-accent font-medium' : ''}"
-							>
-								{page.label}
-							</button>
-						{/each}
+						{#if pageStore.isLoading}
+							<div class="flex items-center justify-center py-8">
+								<div class="text-sm text-muted-foreground">Lade Seiten...</div>
+							</div>
+						{:else if pageStore.pages.length === 0}
+							<div class="flex items-center justify-center py-8 text-center">
+								<div class="text-sm text-muted-foreground">
+									Keine Seiten vorhanden.<br />
+									Erstelle eine neue Seite.
+								</div>
+							</div>
+						{:else}
+							{#each pageStore.pages as page}
+								<button
+									onclick={() => pageStore.setCurrentPage(page.id)}
+									class="w-full rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-accent {pageStore.currentPageId === page.id ? 'bg-accent font-medium' : ''}"
+								>
+									{page.label}
+								</button>
+							{/each}
+						{/if}
 					</nav>
 				</div>
 			</aside>

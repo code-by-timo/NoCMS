@@ -29,44 +29,11 @@ class PageStore {
 	historyIndex = $state(-1);
 	isDirty = $state(false);
 	isAddingSectionMode = $state(false); // Track if we're in "add section" mode
+	isLoading = $state(false); // Track loading state
 
 	constructor() {
-		// Initialize with existing pages (migrated from hardcoded structure)
-		this.pages = [
-			{
-				id: 'home',
-				path: '/',
-				label: 'Home',
-				sections: [
-					{ id: 'home-hero', type: 'hero1', props: {} },
-					{ id: 'home-about', type: 'about1', props: {} },
-					{ id: 'home-contact', type: 'contact1', props: {} }
-				]
-			},
-			{
-				id: 'ueber-mich',
-				path: '/ueber-mich',
-				label: 'Über Mich',
-				sections: [
-					{ id: 'ueber-hero', type: 'hero2', props: {} },
-					{ id: 'ueber-about', type: 'about2', props: {} }
-				]
-			},
-			{
-				id: 'kontakt',
-				path: '/kontakt',
-				label: 'Kontakt',
-				sections: [{ id: 'kontakt-contact', type: 'contact1', props: {} }]
-			}
-		];
-
-		// Set first page as current
-		if (this.pages.length > 0) {
-			this.currentPageId = this.pages[0].id;
-		}
-
-		// Initialize history
-		this.saveToHistory();
+		// Pages will be loaded from GitHub or localStorage
+		// No hardcoded default pages
 	}
 
 	// Get current page (derived)
@@ -285,6 +252,68 @@ class PageStore {
 			console.error('Failed to load from localStorage:', e);
 		}
 		return false;
+	}
+
+	// Load pages from GitHub repository
+	// Always loads fresh from Git and discards any local drafts/history
+	async loadFromGitHub(
+		pat: string,
+		config: { owner: string; repo: string; branch: string }
+	): Promise<boolean> {
+		this.isLoading = true;
+		try {
+			// Use GitHub Contents API instead of raw.githubusercontent.com
+			// This supports CORS and authorization
+			const apiUrl = `https://api.github.com/repos/${config.owner}/${config.repo}/contents/src/data/pages.json?ref=${config.branch}`;
+
+			const response = await fetch(apiUrl, {
+				headers: {
+					Authorization: `Bearer ${pat}`,
+					Accept: 'application/vnd.github.v3+json'
+				}
+			});
+
+			if (!response.ok) {
+				throw new Error(`Failed to fetch pages.json: ${response.statusText}`);
+			}
+
+			const data = await response.json();
+
+			// GitHub Contents API returns base64-encoded content
+			const content = atob(data.content.replace(/\n/g, ''));
+			const pagesData = JSON.parse(content);
+
+			// Validate data
+			if (!Array.isArray(pagesData)) {
+				throw new Error('Invalid pages.json format');
+			}
+
+			// Clear localStorage drafts - we want fresh Git state
+			localStorage.removeItem('nocms-draft-pages');
+
+			// Load pages directly from Git (no merging with drafts)
+			this.pages = pagesData;
+
+			// Set current page
+			if (this.pages.length > 0) {
+				this.currentPageId = this.pages[0].id;
+			}
+
+			// Reset history - start fresh
+			this.history = [];
+			this.historyIndex = -1;
+			this.saveToHistory();
+
+			// Mark as clean (no unsaved changes)
+			this.isDirty = false;
+
+			this.isLoading = false;
+			return true;
+		} catch (e) {
+			console.error('Failed to load from GitHub:', e);
+			this.isLoading = false;
+			return false;
+		}
 	}
 
 	// Mark as published (clear dirty flag)

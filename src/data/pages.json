@@ -1,89 +1,89 @@
 [
-  {
-    "id": "home",
-    "path": "/",
-    "label": "Home",
-    "sections": [
-      {
-        "id": "home-hero",
-        "type": "hero1",
-        "props": {
-          "title": "tim"
-        }
-      },
-      {
-        "id": "home-about",
-        "type": "about1",
-        "props": {}
-      },
-      {
-        "id": "home-contact",
-        "type": "contact1",
-        "props": {}
-      }
-    ]
-  },
-  {
-    "id": "ueber-mich",
-    "path": "/ueber-mich",
-    "label": "Über Mich",
-    "sections": [
-      {
-        "id": "ueber-hero",
-        "type": "hero2",
-        "props": {}
-      },
-      {
-        "id": "ueber-about",
-        "type": "about2",
-        "props": {}
-      }
-    ]
-  },
-  {
-    "id": "kontakt",
-    "path": "/kontakt",
-    "label": "Kontakt",
-    "sections": [
-      {
-        "id": "kontakt-contact",
-        "type": "contact1",
-        "props": {}
-      }
-    ]
-  },
-  {
-    "id": "test",
-    "path": "/test",
-    "label": "test",
-    "sections": [
-      {
-        "id": "test-hero1-1763337020520",
-        "type": "hero1",
-        "props": {
-          "title": "Willkommen",
-          "subtitle": "Dies ist ein neuer Hero-Bereich",
-          "buttonText": "Mehr erfahren",
-          "buttonLink": "#"
-        }
-      }
-    ]
-  },
-  {
-    "id": "lol",
-    "path": "/lol",
-    "label": "Lol",
-    "sections": [
-      {
-        "id": "lol-hero2-1763508797485",
-        "type": "hero2",
-        "props": {
-          "title": "Willkommen",
-          "subtitle": "Dies ist ein neuer Hero-Bereich",
-          "buttonText": "Mehr erfahren",
-          "buttonLink": "#"
-        }
-      }
-    ]
-  }
+	{
+		"id": "home",
+		"path": "/",
+		"label": "Home",
+		"sections": [
+			{
+				"id": "home-hero",
+				"type": "hero1",
+				"props": {
+					"title": "tim"
+				}
+			},
+			{
+				"id": "home-about",
+				"type": "about1",
+				"props": {}
+			},
+			{
+				"id": "home-contact",
+				"type": "contact1",
+				"props": {}
+			}
+		]
+	},
+	{
+		"id": "ueber-mich",
+		"path": "/ueber-mich",
+		"label": "Ãber Mich",
+		"sections": [
+			{
+				"id": "ueber-hero",
+				"type": "hero2",
+				"props": {}
+			},
+			{
+				"id": "ueber-about",
+				"type": "about2",
+				"props": {}
+			}
+		]
+	},
+	{
+		"id": "kontakt",
+		"path": "/kontakt",
+		"label": "Kontakt",
+		"sections": [
+			{
+				"id": "kontakt-contact",
+				"type": "contact1",
+				"props": {}
+			}
+		]
+	},
+	{
+		"id": "test",
+		"path": "/test",
+		"label": "test",
+		"sections": [
+			{
+				"id": "test-hero1-1763337020520",
+				"type": "hero1",
+				"props": {
+					"title": "Willkommen",
+					"subtitle": "Dies ist ein neuer Hero-Bereich",
+					"buttonText": "Mehr erfahren",
+					"buttonLink": "#"
+				}
+			}
+		]
+	},
+	{
+		"id": "lol",
+		"path": "/lol",
+		"label": "Lol",
+		"sections": [
+			{
+				"id": "lol-hero2-1763508797485",
+				"type": "hero2",
+				"props": {
+					"title": "Willkommen",
+					"subtitle": "Dies ist ein neuer Hero-Bereich",
+					"buttonText": "Mehr erfahren",
+					"buttonLink": "#"
+				}
+			}
+		]
+	}
 ]
