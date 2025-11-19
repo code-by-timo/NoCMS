@@ -13,7 +13,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const PAGES_JSON_PATH = path.join(__dirname, '../src/data/pages.json');
-const PAGES_DIR = path.join(__dirname, '../src/routes/(pages)');
+const PAGES_DIR = path.join(__dirname, '../src/routes/(public)');
 
 // Read pages.json
 let pages = [];
@@ -107,7 +107,7 @@ for (const page of pages) {
 	const component = generatePageComponent(page);
 	fs.writeFileSync(filePath, component, 'utf-8');
 
-	console.log(`✓ Generated: ${filePath.replace(PAGES_DIR, '(pages)')}`);
+	console.log(`✓ Generated: ${filePath.replace(PAGES_DIR, '(public)')}`);
 	generatedCount++;
 }
 
