@@ -8,7 +8,7 @@
         "id": "home-hero",
         "type": "hero1",
         "props": {
-          "title": "Timo ist",
+          "title": "Timo ist timo und ",
           "primaryButtonText": "Das ist ein Test"
         }
       },
